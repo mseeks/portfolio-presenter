@@ -11,6 +11,3 @@ gem "rest-client"
 
 # use sinatra to make a simple web server
 gem "sinatra"
-
-# use sinatra-cross_origin for allowing calls from other domains
-gem "sinatra-cross_origin", "~> 0.3.1"
