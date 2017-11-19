@@ -11,6 +11,3 @@ gem "rest-client"
 
 # use sinatra to make a simple web server
 gem "sinatra"
-
-# use sinatra-cross_orgin for configuring cors
-gem "sinatra-cross_origin", "~> 0.3.1"

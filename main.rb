@@ -2,16 +2,11 @@ require "active_support/all"
 require "json"
 require "rest-client"
 require "sinatra"
-require "sinatra/cross_origin"
 
 require "./lib/alpha_vantage"
 
 set :bind, "0.0.0.0"
 set :port, 80
-
-configure do
-  enable :cross_origin
-end
 
 before do
   @api = RestClient::Resource.new("https://api.robinhood.com")
