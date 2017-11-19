@@ -31,6 +31,7 @@ GEM
       rack (~> 2.0)
       rack-protection (= 2.0.0)
       tilt (~> 2.0)
+    sinatra-cross_origin (0.3.2)
     thread_safe (0.3.6)
     tilt (2.0.8)
     tzinfo (1.2.3)
@@ -47,6 +48,7 @@ DEPENDENCIES
   puma
   rest-client
   sinatra
+  sinatra-cross_origin (~> 0.3.1)
 
 BUNDLED WITH
    1.14.6

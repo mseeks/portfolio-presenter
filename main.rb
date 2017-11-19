@@ -2,9 +2,16 @@ require "active_support/all"
 require "json"
 require "rest-client"
 require "sinatra"
+require "sinatra/cross_origin"
+
+require "./lib/alpha_vantage"
 
 set :bind, "0.0.0.0"
 set :port, 80
+
+configure do
+  enable :cross_origin
+end
 
 before do
   @api = RestClient::Resource.new("https://api.robinhood.com")
@@ -120,5 +127,69 @@ get "/positions" do
       quantity: 1.0,
       symbol: "CASH"
     }).sort_by{|position| position[:holding_value] }.reverse
+  }.to_json
+end
+
+get "/positions/:symbol/signals/:period" do
+  # interval = 5minute | 10minute + span = day, week
+  # interval = day + span = year
+  # interval = week
+  interval, span = case params[:period]
+  when "1d"
+    ["5minute", "day"]
+  when "1w"
+    ["10minute", "week"]
+  when "1m"
+    ["day", nil]
+  when "3m"
+    ["day", "year"]
+  when "1y"
+    ["day", "year"]
+  when "all"
+    ["week", nil]
+  end
+
+  formatted_span = if span
+    "&span=#{span}"
+  else
+    ""
+  end
+
+  @account = JSON.parse(@api["accounts/"].get(@api_headers).body)["results"].first
+  @portfolio = JSON.parse(RestClient.get(@account["portfolio"], @api_headers).body)
+  historicals = JSON.parse(@api["/portfolios/historicals/#{@account["account_number"]}?interval=#{interval}#{formatted_span}"].get(@api_headers).body)
+
+  historicals = case params[:period]
+  when "1d"
+    historicals["equity_historicals"]
+  when "1w"
+    historicals["equity_historicals"]
+  when "1m"
+    historicals["equity_historicals"].last(30)
+  when "3m"
+    historicals["equity_historicals"].select do |historical|
+      Time.parse(historical["begins_at"]) > Time.now - 3.months
+    end
+  when "1y"
+    historicals["equity_historicals"]
+  when "all"
+    historicals["equity_historicals"]
+  end
+
+  historicals = historicals.map{|historical| historical["begins_at"] }
+
+  signals = AlphaVantage.new(params[:symbol].upcase).macd_query
+  signals = signals.select{|signal|
+    first_historical_time = Time.parse(historicals.first)
+    last_historical_time = Time.parse(historicals.last)
+    signal_time = Time.parse(signal[:begins_at])
+
+    signal_time >= first_historical_time && signal_time <= last_historical_time
+  }
+
+  content_type :json
+
+  {
+    signals: signals
   }.to_json
 end
