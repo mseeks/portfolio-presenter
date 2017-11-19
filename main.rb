@@ -131,7 +131,7 @@ get "/positions/:symbol/signals/:period" do
   # interval = week
   interval, span = case params[:period]
   when "1d"
-    ["5minute", "day"]
+    ["10minute", "week"] # Too small of a timeframe, use a week instead
   when "1w"
     ["10minute", "week"]
   when "1m"
