@@ -181,7 +181,7 @@ get "/positions/:symbol/signals/:period" do
 
     signal_time >= first_historical_time && signal_time <= last_historical_time
   }.map{|signal|
-    signal[:begins_at] = Time.parse(signal[:begins_at]).iso8601
+    signal[:begins_at] = ActiveSupport::TimeZone["America/New_York"].parse(signal[:begins_at]).iso8601
 
     signal
   }
