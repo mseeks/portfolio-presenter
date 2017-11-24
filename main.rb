@@ -192,3 +192,69 @@ get "/positions/:symbol/signals/:period" do
     signals: signals
   }.to_json
 end
+
+get "/positions/:symbol/orders/:period" do
+  # interval = 5minute | 10minute + span = day, week
+  # interval = day + span = year
+  # interval = week
+  interval, span = case params[:period]
+  when "1d"
+    ["10minute", "week"] # Too small of a timeframe, use a week instead
+  when "1w"
+    ["10minute", "week"]
+  when "1m"
+    ["day", nil]
+  when "3m"
+    ["day", "year"]
+  when "1y"
+    ["day", "year"]
+  when "all"
+    ["week", nil]
+  end
+
+  formatted_span = if span
+    "&span=#{span}"
+  else
+    ""
+  end
+
+  @account = JSON.parse(@api["accounts/"].get(@api_headers).body)["results"].first
+  @portfolio = JSON.parse(RestClient.get(@account["portfolio"], @api_headers).body)
+  historicals = JSON.parse(@api["/portfolios/historicals/#{@account["account_number"]}?interval=#{interval}#{formatted_span}"].get(@api_headers).body)
+
+  historicals = case params[:period]
+  when "1d"
+    historicals["equity_historicals"]
+  when "1w"
+    historicals["equity_historicals"]
+  when "1m"
+    historicals["equity_historicals"].last(30)
+  when "3m"
+    historicals["equity_historicals"].select do |historical|
+      Time.parse(historical["begins_at"]) > Time.now - 3.months
+    end
+  when "1y"
+    historicals["equity_historicals"]
+  when "all"
+    historicals["equity_historicals"]
+  end
+
+  historicals = historicals.map{|historical| historical["begins_at"] }
+
+  instrument = JSON.parse(@api["instruments/?symbol=#{params[:symbol].upcase}"].get(@api_headers).body)["results"].first
+  orders = JSON.parse(@api["orders/?instrument=#{instrument["url"]}&updated_at[gte]=#{Time.parse(historicals.first).iso8601}"].get(@api_headers).body)["results"]
+
+  content_type :json
+
+  {
+    orders: orders.map{|order|
+      {
+        state: order["state"],
+        price: order["average_price"],
+        type: order["side"],
+        quantity: order["cumulative_quantity"],
+        execution_time: order["last_transaction_at"]
+      }
+    }
+  }.to_json
+end
