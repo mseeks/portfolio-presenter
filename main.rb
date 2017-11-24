@@ -253,7 +253,7 @@ get "/positions/:symbol/orders/:period" do
         price: order["average_price"],
         type: order["side"],
         quantity: order["cumulative_quantity"],
-        execution_time: order["last_transaction_at"]
+        execution_time: Time.parse(order["last_transaction_at"]).iso8601
       }
     }.select{|order|
       first_historical_time = Time.parse(historicals.first)
