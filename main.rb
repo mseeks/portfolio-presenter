@@ -255,6 +255,12 @@ get "/positions/:symbol/orders/:period" do
         quantity: order["cumulative_quantity"],
         execution_time: order["last_transaction_at"]
       }
+    }.select{|order|
+      first_historical_time = Time.parse(historicals.first)
+      last_historical_time = Time.parse(historicals.last)
+      execution_time = Time.parse(order[:execution_time])
+
+      execution_time >= first_historical_time && execution_time <= last_historical_time
     }
   }.to_json
 end
