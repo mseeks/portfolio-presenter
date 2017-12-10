@@ -100,28 +100,21 @@ get "/positions" do
       current_quote = current_quote.to_f
       quantity = position["quantity"].to_f
       average_buy_price = position["average_buy_price"].to_f
-      holding_value = current_quote * quantity
-      cost_basis = average_buy_price * quantity
-      holding_change = holding_value - cost_basis
 
       {
         average_buy_price: average_buy_price,
-        cost_basis: cost_basis,
-        holding_change: holding_change,
-        holding_value: holding_value,
+        current_quote: current_quote,
         name: position["instrument"]["simple_name"],
         quantity: quantity,
         symbol: position["instrument"]["symbol"]
       }
     }.push({
       average_buy_price: cash,
-      cost_basis: cash,
-      holding_change: 0,
-      holding_value: cash,
+      current_quote: cash,
       name: "Buying Power",
       quantity: 1.0,
       symbol: "CASH"
-    }).sort_by{|position| position[:holding_value] }.reverse
+    })
   }.to_json
 end
 
