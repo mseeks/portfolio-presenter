@@ -90,7 +90,7 @@ get "/positions" do
     position
   end
 
-  cash = @account["buying_power"].to_f
+  cash = @account["cash"].to_f
 
   content_type :json
   {
